@@ -1,4 +1,4 @@
-const data = [...Array(100)].map((_, index) => ({
+const data = [...Array(200)].map((_, index) => ({
     userId: index + 101,
     id: index + 1,
     title: `Item ${index + 1}`,
@@ -34,10 +34,8 @@ function renderPagination() {
     const totalPages = getTotalPages();
 
     const prevButton = document.createElement('button');
-    prevButton.textContent = 'Prev';
-    if(currentPage === 1){
-        prevButton.disabled = true;
-    }
+    prevButton.textContent = 'Previous';
+    prevButton.disabled = currentPage === 1;
     prevButton.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
@@ -46,26 +44,41 @@ function renderPagination() {
     });
     paginationContainer.appendChild(prevButton);
 
-    // Render all page buttons
-    for (let i = 1; i <= totalPages; i++) {
-        const pageButton = document.createElement('button');
-        pageButton.textContent = i;
-        pageButton.classList.add('page-button');
-        if (i === currentPage) {
-            pageButton.classList.add('active');
+    const maxVisibleButtons = 5;
+    const startPage = Math.max(1, currentPage - Math.floor(maxVisibleButtons / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+
+    if (startPage > 1) {
+        const firstPageButton = createPageButton(1);
+        paginationContainer.appendChild(firstPageButton);
+
+        if (startPage > 2) {
+            const ellipsis = document.createElement('span');
+            ellipsis.classList.add('ellipsis');
+            ellipsis.textContent = '...';
+            paginationContainer.appendChild(ellipsis);
         }
-        pageButton.addEventListener('click', () => {
-            currentPage = i;
-            updatePage();
-        });
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const pageButton = createPageButton(i);
         paginationContainer.appendChild(pageButton);
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsis = document.createElement('span');
+            ellipsis.classList.add('ellipsis');
+            ellipsis.textContent = '...';
+            paginationContainer.appendChild(ellipsis);
+        }
+        const lastPageButton = createPageButton(totalPages);
+        paginationContainer.appendChild(lastPageButton);
     }
 
     const nextButton = document.createElement('button');
     nextButton.textContent = 'Next';
-    if(currentPage === totalPages){
-        nextButton.disabled = true;
-    }
+    nextButton.disabled = currentPage === totalPages;
     nextButton.addEventListener('click', () => {
         if (currentPage < totalPages) {
             currentPage++;
@@ -75,11 +88,25 @@ function renderPagination() {
     paginationContainer.appendChild(nextButton);
 }
 
+function createPageButton(page) {
+    const button = document.createElement('button');
+    button.textContent = page;
+    button.classList.add('page-button');
+    if (page === currentPage) {
+        button.classList.add('active');
+    }
+    button.addEventListener('click', () => {
+        currentPage = page;
+        updatePage();
+    });
+    return button;
+}
+
 function updatePage() {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     const currentItems = data.slice(start, end);
-    
+
     renderItems(currentItems);
     renderPagination();
 }
